@@ -155,7 +155,7 @@
 
         <!-- Scrapbook Title -->
         <h1 id="scrapbookTitle" class="font-serif text-4xl md:text-6xl font-normal tracking-tight text-gray-800 mb-3">
-            Tess & Nicko
+            Tess & Nicko: Year One
         </h1>
         <p id="scrapbookSubtitle" class="text-gray-500 max-w-xl mx-auto text-base font-light mb-8">
             From our first parkrun step to running down Muswell Hill and traveling Tuscany, here are our most treasured chapters.
@@ -178,7 +178,7 @@
                     <div class="text-[10px] md:text-xs uppercase tracking-wider text-stone-500 mt-1">Mins</div>
                 </div>
                 <div class="bg-rose-50/50 p-3 rounded-xl border border-rose-100/40">
-                    <div id="counter-seconds" class="text-2xl md:text-3xl font-serif font-semibold text-rose-700 animate-pulse">00</div>
+                    <div id="counter-seconds" class="text-2xl md:text-3xl font-serif font-semibold text-rose-900">00</div>
                     <div class="text-[10px] md:text-xs uppercase tracking-wider text-stone-500 mt-1">Secs</div>
                 </div>
             </div>
@@ -466,7 +466,7 @@
                 <!-- Story / Description text -->
                 <div>
                     <label class="block text-xs font-bold uppercase tracking-wider text-stone-500 mb-1.5">The Story / Secret Memo *</label>
-                    <textarea id="memDescription" required rows="4" placeholder="Write down the cozy little details from this moment that made you smile..." class="w-full px-3.5 py-2 text-sm rounded-lg border border-stone-200 focus:outline-none focus:ring-1 focus:ring-rose-400"></textarea>
+                    <textarea id="memDescription" required rows="4" placeholder="Write down the cozy little details from this moment that made you smile..." class="w-full px-3.5 py-2 text-sm rounded-lg border border-stone-200 focus:outline-none ring-rose-400"></textarea>
                 </div>
 
                 <!-- Submit Action Buttons -->
@@ -529,7 +529,7 @@
 
             <!-- Expanded Modal Photo Container -->
             <div class="w-full h-[260px] sm:h-[360px] bg-stone-100 relative overflow-hidden">
-                <img src="" alt="" class="w-full h-full object-cover" id="modalImage">
+                <img src="" alt="" class="w-full h-full object-cover" id="modalImage" onerror="window.handleImageLoadError(this)">
                 <!-- Soft Overlay Vignette -->
                 <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
                 <div class="absolute bottom-4 left-6 right-6 flex justify-between items-end">
@@ -625,6 +625,122 @@
                 ambientSynth.triggerAttackRelease("C6", "4n", now + 0.2);
             } catch (e) { console.log(e); }
         }
+
+        // Core dynamic state and memories mapped perfectly
+        let memories = [];
+        let config = {
+            title: "Tess & Nicko: Year One",
+            subtitle: "From our first parkrun step to running down Muswell Hill and traveling Tuscany, here are our most treasured chapters.",
+            anniversaryDate: "2025-05-23",
+            accentTheme: "rose",
+            loveLetter: "Dear Tess,\n\nLooking back at this past year, every memory represents a beautiful adventure we built hand-in-hand. From running the Clapham Common parkrun on our first date on April 26th, shouting 'Dog Days' and sprinting to Muswell Hill, to staying next to Pisa and walking the walls of Lucca.\n\nIt took less than a month of knowing each other from that first run together to know with absolute certainty that I wanted you to be my girlfriend on May 23rd.\n\nThank you for sharing so many days in Liverpool with me, from the magical Candlelight concert to our endless brunches and roasts around the city. And of course, for running a whole half-marathon with me when I didn't even know I was running it until that very weekend! I was the one surprised, but I loved every second of it!\n\nYou are my absolute favorite runner, explorer, teammate, and partner. Here is to our wonderful first year and the endless milestones ahead of us!\n\nAll my love,\nNicko"
+        };
+
+        const themePalettes = {
+            rose: { primary: '#d4a396', hover: '#9f6b5f', light: '#f5eae6', bg: '#fbf9f6', text: '#2d2d2d' },
+            emerald: { primary: '#0f766e', hover: '#115e59', light: '#ccfbf1', bg: '#f0fdfa', text: '#0f172a' },
+            gold: { primary: '#b45309', hover: '#92400e', light: '#fef3c7', bg: '#fffdf5', text: '#1e1b4b' },
+            sage: { primary: '#606c38', hover: '#283618', light: '#f4f9f1', bg: '#fefefe', text: '#2c3531' },
+            coral: { primary: '#dd6b20', hover: '#c05621', light: '#feebc8', bg: '#fffaf0', text: '#2d3748' }
+        };
+
+        // Fallbacks mapping to Unsplash if your local GitHub folder doesn't have the files uploaded yet!
+        const imageFallbacks = {
+            "Tess_Nicko_Boat.JPG": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=600",
+            "Candlelight.jpg": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=600",
+            "Climb.jpg": "https://images.unsplash.com/photo-1501555088652-021faa106b9b?q=80&w=600",
+            "Us_Ivy.JPG": "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?q=80&w=600",
+            "Tess_IVY.jpg": "https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=600",
+            "TN_Flor.jpg": "https://images.unsplash.com/photo-1528114039593-4366cc08227d?q=80&w=600",
+            "Us_AS.jpg": "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=600"
+        };
+
+        const defaultMemories = [
+            {
+                date: "2025-04-26",
+                title: "Our First Date: Clapham Common Parkrun",
+                category: "Dates 🥐",
+                imageUrl: "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?q=80&w=600&auto=format&fit=crop",
+                description: "What an absolutely epic first date! We ran the Clapham Common parkrun, realized we both have an obsession with Florence and the Machine, discovered our mutual love for 'Dog Days Are Over', and ended up spontaneously running down the road to Muswell Hill! It took less than a month since this magical morning of April 26th to realize I wanted her to be my girlfriend."
+            },
+            {
+                date: "2025-05-23",
+                title: "The Day We Got Together",
+                category: "Milestones 🏅",
+                imageUrl: "Tess_Nicko_Boat.JPG",
+                description: "The official start of us! May 23rd marks the beginning of our unforgettable story. It took less than a single month since our first date on April 26th to make things official, and it's been the best decision ever. Sitting on the boat, taking in the sunny water, there was no looking back."
+            },
+            {
+                date: "2025-06-18",
+                title: "Views from The Shard",
+                category: "Dates 🥐",
+                imageUrl: "https://images.unsplash.com/photo-1513635269975-59663e0ca1ad?q=80&w=600&auto=format&fit=crop",
+                description: "A gorgeous, sparkling date night high above London. Looking out at the endless city lights from the top of The Shard with Tess made the world feel quiet."
+            },
+            {
+                date: "2025-08-14",
+                title: "Candlelight Concert in Liverpool",
+                category: "Dates 🥐",
+                imageUrl: "Candlelight.jpg",
+                description: "Surrounded by hundreds of glowing candles, we listened to beautiful live string renditions. A perfect, intimate highlight of our early days in Liverpool."
+            },
+            {
+                date: "2025-10-18",
+                title: "Shepherds Hut in Ashbourne & Peak Climbs",
+                category: "Trips ✈️",
+                imageUrl: "Climb.jpg",
+                description: "Winding down near Ashbourne in a cozy shepherds hut. Hiking and climbing up the gorgeous green hills under a bright sky. A crisp October weekend spent completely unplugged, laughing under the starlight, and sitting by the woodburner."
+            },
+            {
+                date: "2025-11-08",
+                title: "Party Nights: Albert's Schloss!",
+                category: "Adventure ⛰️",
+                imageUrl: "Us_AS.jpg",
+                description: "Dressing up and dancing the night away under the neon lights in Liverpool! We always bring the best energy, the biggest laughs, and absolute best moves to the dancefloor."
+            },
+            {
+                date: "2025-11-20",
+                title: "Sundays in Liverpool & Mirror Selfies",
+                category: "Cozy 🏡",
+                imageUrl: "Us_Ivy.JPG",
+                description: "I have spent so many incredible days here. Between cozy brunches, taking gorgeous mirror selfies when dressed up on our dinner dates, and walking through the city streets, Liverpool has become a second home."
+            },
+            {
+                date: "2025-12-15",
+                title: "Liverpool Roasts, Brunches & The Ivy",
+                category: "Dates 🥐",
+                imageUrl: "Tess_IVY.jpg",
+                description: "Enjoying cozy breakfasts, piled-high brunch tables, and the absolute best Sunday roasts with gravy poured over everything. Eating our way through Liverpool's best spots—like sitting under the stunning decorative ceilings at The Ivy—is our specialty!"
+            },
+            {
+                date: "2026-04-12",
+                title: "Italian Adventures: Lucca & Florence",
+                category: "Trips ✈️",
+                imageUrl: "TN_Flor.jpg",
+                description: "Exploring the legendary historic town of Lucca and the gorgeous terracotta rooftops of Florence. Smiling right in front of the Duomo, gelato in hand, walking along ancient fortress walls, and soaking up the Tuscan sun."
+            },
+            {
+                date: "2026-04-14",
+                title: "Staying Right Next to Pisa",
+                category: "Trips ✈️",
+                imageUrl: "https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?q=80&w=600&auto=format&fit=crop",
+                description: "Waking up right next to the Leaning Tower of Pisa! We spent hours exploring, snapping classic silly tourist photos, and loving every minute of being right in the heart of Tuscany."
+            },
+            {
+                date: "2026-05-03",
+                title: "The Surprise Liverpool Half-Marathon!",
+                category: "Milestones 🏅",
+                imageUrl: "https://images.unsplash.com/photo-1502224562085-639556652f33?q=80&w=600", 
+                description: "What a crazy, unforgettable milestone! We conquered the Liverpool Half-Marathon together. The best part? Nicko didn't even know he was running it until that very weekend! He was the one surprised, but loved every second of it, and we smashed it side-by-side."
+            },
+            {
+                date: "2026-05-10",
+                title: "Our Endless Parkrun Streak",
+                category: "Adventure ⛰️",
+                imageUrl: "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?q=80&w=600&auto=format&fit=crop",
+                description: "We have run numerous parkruns together all over. No matter how tired we are on a Saturday morning, stepping up to the starting line side-by-side is our absolute favorite routine."
+            }
+        ];
 
         function toggleSound() {
             isSoundEnabled = !isSoundEnabled;
@@ -739,106 +855,18 @@
         }
         animateParticles();
 
-        // Core application data state updated to Tess & Nicko
-        let memories = [];
-        let config = {
-            title: "Tess & Nicko: Year One",
-            subtitle: "From our first parkrun step to running down Muswell Hill and traveling Tuscany, here are our most treasured chapters.",
-            anniversaryDate: "2025-05-23",
-            accentTheme: "rose",
-            loveLetter: "Dear Tess,\n\nLooking back at this past year, every memory represents a beautiful adventure we built hand-in-hand. From running the Clapham Common parkrun on our first date on April 26th, shouting 'Dog Days' and sprinting to Muswell Hill, to staying next to Pisa and walking the walls of Lucca.\n\nIt took less than a month of knowing each other from that first run together to know with absolute certainty that I wanted you to be my girlfriend on May 23rd.\n\nThank you for sharing so many days in Liverpool with me, from the magical Candlelight concert to our endless brunches and roasts around the city. And of course, for running a whole half-marathon with me when you didn't even know you were running it until that very weekend!\n\nYou are my absolute favorite runner, explorer, teammate, and partner. Here is to our wonderful first year and the endless milestones ahead of us!\n\nAll my love,\nNicko"
-        };
-
-        const themePalettes = {
-            rose: { primary: '#d4a396', hover: '#9f6b5f', light: '#f5eae6', bg: '#fbf9f6', text: '#2d2d2d' },
-            emerald: { primary: '#0f766e', hover: '#115e59', light: '#ccfbf1', bg: '#f0fdfa', text: '#0f172a' },
-            gold: { primary: '#b45309', hover: '#92400e', light: '#fef3c7', bg: '#fffdf5', text: '#1e1b4b' },
-            sage: { primary: '#606c38', hover: '#283618', light: '#f4f9f1', bg: '#fefefe', text: '#2c3531' },
-            coral: { primary: '#dd6b20', hover: '#c05621', light: '#feebc8', bg: '#fffaf0', text: '#2d3748' }
-        };
-
-        const defaultMemories = [
-            {
-                date: "2025-04-26",
-                title: "Our First Date: Clapham Common Parkrun",
-                category: "Dates 🥐",
-                imageUrl: "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?q=80&w=600&auto=format&fit=crop",
-                description: "What an absolutely epic first date! We ran the Clapham Common parkrun, realized we both have an obsession with Florence and the Machine, discovered our mutual love for 'Dog Days Are Over', and ended up spontaneously running down the road to Muswell Hill! It took less than a month since this magical morning of April 26th to realize I wanted her to be my girlfriend."
-            },
-            {
-                date: "2025-05-23",
-                title: "The Day We Got Together",
-                category: "Milestones 🏅",
-                imageUrl: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=600&auto=format&fit=crop",
-                description: "The official start of us! May 23rd marks the beginning of an unforgettable story. It took less than a single month since our first date on April 26th to make things official, and it's been the best decision ever. No looking back—the best team was formed right here."
-            },
-            {
-                date: "2025-05-02",
-                title: "Views from The Shard",
-                category: "Dates 🥐",
-                imageUrl: "https://photos.app.goo.gl/M1vyzEDYxZTmX9Bq6?q=80&w=600&auto=format&fit=crop",
-                description: "A gorgeous, sparkling date night high above London. Looking out at the endless city lights from the top of The Shard with Tess made the world feel quiet."
-            },
-            {
-                date: "2025-12-14",
-                title: "Candlelight Concert in Liverpool",
-                category: "Dates 🥐",
-                imageUrl: "https://photos.app.goo.gl/7Aw5PkBAmA3tQQt58?q=80&w=600&auto=format&fit=crop",
-                description: "Surrounded by hundreds of glowing candles, we listened to beautiful live string renditions. A perfect, intimate highlight of our early days in Liverpool."
-            },
-            {
-                date: "2025-10-24",
-                title: "Shepherds Hut in Ashbourne",
-                category: "Trips ✈️",
-                imageUrl: "https://photos.app.goo.gl/tSQoUHoiEipXwXtE9?q=80&w=600&auto=format&fit=crop",
-                description: "Winding down near Ashbourne in a cozy shepherds hut. A crisp October weekend spent completely unplugged, laughing under the starlight, and sitting by the woodburner."
-            },
-            {
-                date: "2025-11-20",
-                title: "Sundays in Liverpool",
-                category: "Cozy 🏡",
-                imageUrl: "https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=600&auto=format&fit=crop",
-                description: "I have spent so many incredible days here. Between cozy brunches, late-night talks, and walking through the city streets, Liverpool has become a second home."
-            },
-            {
-                date: "2025-12-13",
-                title: "Liverpool Roasts & Brunches",
-                category: "Dates 🥐",
-                imageUrl: "https://images.unsplash.com/photo-1525351484163-7529414344d8?q=80&w=600&auto=format&fit=crop",
-                description: "Enjoying cozy breakfasts, piled-high brunch tables, and the absolute best Sunday roasts with gravy poured over everything. Eating our way through Liverpool's best spots is our specialty!"
-            },
-            {
-                date: "2026-04-12",
-                title: "Italian Adventures: Lucca & Florence",
-                category: "Trips ✈️",
-                imageUrl: "https://images.unsplash.com/photo-1528114039593-4366cc08227d?q=80&w=600&auto=format&fit=crop",
-                description: "Exploring the legendary historic town of Lucca and the gorgeous terracotta rooftops of Florence. Gelato in hand, walking along ancient fortress walls, and soaking up the Tuscan sun."
-            },
-            {
-                date: "2026-04-14",
-                title: "Staying Right Next to Pisa",
-                category: "Trips ✈️",
-                imageUrl: "https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?q=80&w=600&auto=format&fit=crop",
-                description: "Waking up right next to the Leaning Tower of Pisa! We spent hours exploring, snapping classic silly tourist photos, and loving every minute of being right in the heart of Tuscany."
-            },
-            {
-                date: "2026-03-15",
-                title: "The Surprise Liverpool Half-Marathon!",
-                category: "Milestones 🏅",
-                imageUrl: "", // Left blank intentionally so user can try the uploader/custom photo tool
-                description: "What a crazy, unforgettable milestone! We conquered the Liverpool Half-Marathon together. The best part? Nicko didn't even know he was running it until that very weekend! Tess surprised him with the registration, and they smashed it side-by-side."
-            },
-            {
-                date: "2026-05-16",
-                title: "Our Endless Parkrun Streak",
-                category: "Adventure ⛰️",
-                imageUrl: "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?q=80&w=600&auto=format&fit=crop",
-                description: "We have run numerous parkruns together all over. No matter how tired we are on a Saturday morning, stepping up to the starting line side-by-side is our absolute favorite routine."
-            }
-        ];
-
         let selectedCategory = "All";
         let viewMode = "timeline";
+
+        // Global error handler for local images (gracefully switches to beautiful Unsplash themes if local files are missing)
+        window.handleImageLoadError = function(img) {
+            const srcAttr = img.getAttribute('src');
+            if (srcAttr && imageFallbacks[srcAttr]) {
+                img.src = imageFallbacks[srcAttr];
+            } else if (img.src !== "https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&w=800&q=80") {
+                img.src = "https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&w=800&q=80";
+            }
+        };
 
         async function compressAndProcessImage(event) {
             const file = event.target.files[0];
@@ -884,7 +912,6 @@
                 img.onload = function() {
                     try {
                         const canvas = document.createElement('canvas');
-                        // Slightly reduced bounding box to guarantee storage safety
                         const MAX_WIDTH = 400; 
                         const MAX_HEIGHT = 400;
                         let width = img.width;
@@ -907,7 +934,6 @@
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
 
-                        // Optimized quality ratio to maximize storage potential
                         const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
                         
                         document.getElementById('memImageUrl').value = compressedDataUrl;
@@ -999,12 +1025,10 @@
         // Parse and translate regular shared Google Drive URLs to direct viewing endpoints
         function convertGoogleDriveUrl(url) {
             let fileId = '';
-            // Match Format 1: drive.google.com/file/d/FILE_ID/view...
             const matchD = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
             if (matchD && matchD[1]) {
                 fileId = matchD[1];
             } else {
-                // Match Format 2: drive.google.com/open?id=FILE_ID
                 const matchId = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
                 if (matchId && matchId[1]) {
                     fileId = matchId[1];
@@ -1018,12 +1042,10 @@
         }
 
         function loadAllData() {
-            // Load custom options safely
             const storedConfig = localStorage.getItem('anniversary_config');
             if (storedConfig) {
                 try {
                     config = Object.assign(config, JSON.parse(storedConfig));
-                    // Auto-migrate old default names if they exist in localStorage cached data
                     if (config.title.includes("Lou") || config.title.includes("Alex")) {
                         config.title = "Tess & Nicko: Year One";
                         config.loveLetter = config.loveLetter
@@ -1032,12 +1054,10 @@
                     }
                 } catch(e) { console.error("Config parsing issue", e); }
             }
-            // Load saved memories safely
             const storedMemories = localStorage.getItem('anniversary_memories');
             if (storedMemories) {
                 try {
                     let parsed = JSON.parse(storedMemories);
-                    // Standardize names in saved cache to match request
                     parsed = parsed.map(m => {
                         if (m.title.includes("Lou")) m.title = m.title.replace("Lou", "Tess");
                         if (m.description.includes("Lou")) m.description = m.description.replace("Lou", "Tess");
@@ -1052,7 +1072,6 @@
                 memories = [...defaultMemories];
             }
 
-            // Apply loaded config elements
             document.getElementById('scrapbookTitle').innerText = config.title;
             document.getElementById('scrapbookSubtitle').innerText = config.subtitle;
             document.getElementById('cfgScrapbookTitle').value = config.title;
@@ -1071,13 +1090,11 @@
             
             let difference = now.getTime() - targetDate.getTime();
             
-            // UI elements
             const dayElem = document.getElementById('counter-days');
             const hrElem = document.getElementById('counter-hours');
             const minElem = document.getElementById('counter-minutes');
             const secElem = document.getElementById('counter-seconds');
 
-            // Format date string for label display
             const options = { year: 'numeric', month: 'long', day: 'numeric' };
             document.getElementById('anniversaryDateDisplay').innerText = targetDate.toLocaleDateString(undefined, options);
 
@@ -1263,14 +1280,13 @@
                 const leftSideAlign = index % 2 === 0 ? 'md:text-right md:pr-12' : 'md:text-left md:pl-12';
                 const rightSideAlign = index % 2 === 0 ? 'md:pl-12' : 'md:pr-12';
 
-                // Setup Encouraging Photo placeholder block
                 const hasCustomPhoto = mem.imageUrl && mem.imageUrl.trim() !== "";
                 const photoSrc = hasCustomPhoto ? mem.imageUrl : 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=400';
                 
                 let photoSectionHTML = '';
                 if (hasCustomPhoto) {
                     photoSectionHTML = `
-                        <img src="${photoSrc}" alt="${mem.title}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.src='https://placehold.co/600x400/f5eae6/d4a396?text=Our+Special+Day'">
+                        <img src="${photoSrc}" alt="${mem.title}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="window.handleImageLoadError(this)">
                     `;
                 } else {
                     photoSectionHTML = `
@@ -1319,7 +1335,7 @@
 
                 let photoHTML = '';
                 if (hasCustomPhoto) {
-                    photoHTML = `<img src="${photoSrc}" alt="${mem.title}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/400x400/f5eae6/d4a396?text=Our+Day'">`;
+                    photoHTML = `<img src="${photoSrc}" alt="${mem.title}" class="w-full h-full object-cover" onerror="window.handleImageLoadError(this)">`;
                 } else {
                     photoHTML = `
                         <div class="w-full h-full bg-stone-50 flex flex-col items-center justify-center text-center p-4 border border-dashed border-stone-200">
@@ -1467,7 +1483,6 @@
             const description = document.getElementById('memDescription').value;
             const editIndexStr = document.getElementById('editMemoryIndex').value;
 
-            // Simple aesthetic helper to pick preset if completely empty
             if (!imageUrl) {
                 const kw = title.toLowerCase() + " " + category.toLowerCase();
                 if (kw.includes("run") || kw.includes("clapham") || kw.includes("marathon") || kw.includes("sport")) {
@@ -1481,13 +1496,11 @@
                 } else if (kw.includes("liverpool") || kw.includes("roast") || kw.includes("brunch") || kw.includes("dinner")) {
                     imageUrl = "https://images.unsplash.com/photo-1525351484163-7529414344d8?q=80&w=600";
                 } else {
-                    imageUrl = ""; // Keep blank to trigger encouraging photobox
+                    imageUrl = ""; 
                 }
             }
 
             const payload = { title, category, date, imageUrl, description };
-            
-            // Backup current state in case local storage is full
             const originalMemories = [...memories];
 
             if (editIndexStr !== "") {
@@ -1497,7 +1510,6 @@
                 memories.push(payload);
             }
 
-            // Save inside Try/Catch wrapper to prevent silent quota blockages
             try {
                 localStorage.setItem('anniversary_memories', JSON.stringify(memories));
                 if (editIndexStr !== "") {
@@ -1513,7 +1525,6 @@
                 initQuiz();
             } catch (err) {
                 console.error("Storage full error: ", err);
-                // Rollback memories state
                 memories = originalMemories;
                 
                 showCustomConfirm(
@@ -1547,7 +1558,6 @@
             }
             
             document.getElementById('memDescription').value = mem.description;
-            
             document.getElementById('memSubmitButton').innerText = "Update Memory Details";
             
             const drawer = document.getElementById('memoryDrawer');
@@ -1593,7 +1603,7 @@
                 subtitle: "From our first parkrun step to running down Muswell Hill and traveling Tuscany, here are our most treasured chapters.",
                 anniversaryDate: "2025-05-23",
                 accentTheme: "rose",
-                loveLetter: "Dear Tess,\n\nLooking back at this past year, every memory represents a beautiful adventure we built hand-in-hand. From running the Clapham Common parkrun on our first date on April 26th, shouting 'Dog Days' and sprinting to Muswell Hill, to staying next to Pisa and walking the walls of Lucca.\n\nIt took less than a month of knowing each other from that first run together to know with absolute certainty that I wanted you to be my girlfriend on May 23rd.\n\nThank you for sharing so many days in Liverpool with me, from the magical Candlelight concert to our endless brunches and roasts around the city. And of course, for running a whole half-marathon with me when you didn't even know you were running it until that very weekend!\n\nYou are my absolute favorite runner, explorer, teammate, and partner. Here is to our wonderful first year and the endless milestones ahead of us!\n\nAll my love,\nNicko"
+                loveLetter: "Dear Tess,\n\nLooking back at this past year, every memory represents a beautiful adventure we built hand-in-hand. From running the Clapham Common parkrun on our first date on April 26th, shouting 'Dog Days' and sprinting to Muswell Hill, to staying next to Pisa and walking the walls of Lucca.\n\nIt took less than a month of knowing each other from that first run together to know with absolute certainty that I wanted you to be my girlfriend on May 23rd.\n\nThank you for sharing so many days in Liverpool with me, from the magical Candlelight concert to our endless brunches and roasts around the city. And of course, for running a whole half-marathon with me when I didn't even know I was running it until that very weekend! I was the one surprised, but I loved every second of it!\n\nYou are my absolute favorite runner, explorer, teammate, and partner. Here is to our wonderful first year and the endless milestones ahead of us!\n\nAll my love,\nNicko"
             };
             memories = [...defaultMemories];
             
@@ -1645,7 +1655,7 @@
             }
         };
 
-        /* Nostalgic Mini-Quiz engine - Programmed perfectly with your specific memories */
+        /* Nostalgic Mini-Quiz engine */
         let quizStep = 0;
         let quizAnswers = [];
         let quizPool = [];
@@ -1653,7 +1663,7 @@
         function initQuiz() {
             quizPool = [
                 {
-                    q: "Where was our very first date on April 26th where we ran, you almost chundered and we ate bananas on a park bench, Oh and where you dropped your strawberries?",
+                    q: "Where was our very first date on April 26th where we ran and ended up spontaneously sprinting down the road?",
                     options: ["Richmond Park", "Hampstead Heath", "Clapham Common", "Liverpool Promenade"],
                     correct: "Clapham Common"
                 },
