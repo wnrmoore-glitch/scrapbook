@@ -32,6 +32,17 @@
                 img.src = "https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&w=600&q=80"; 
             }
         };
+
+        window.getMediaHTML = function(url, classes = "w-full h-full object-cover", extraAttrs = "") {
+            if (!url) {
+                return `<img src="https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=600" class="${classes}" ${extraAttrs}>`;
+            }
+            const isVideo = url.startsWith('data:video/') || url.match(/\.(mp4|mov|webm|ogg)/i);
+            if (isVideo) {
+                return `<video src="${url}" class="${classes}" autoplay muted loop playsinline ${extraAttrs}></video>`;
+            }
+            return `<img src="${url}" class="${classes}" onerror="window.handleImageLoadError(this)" ${extraAttrs}>`;
+        };
     </script>
 
     <!-- Tone.js, heic2any, and official Cloud Database SDK -->
@@ -63,6 +74,31 @@
 </head>
 <body class="bg-[#fbf9f6] text-[#2d2d2d] font-sans antialiased min-h-screen relative overflow-x-hidden pb-16">
 
+    <!-- Locked Gate Shield (Password Screen) -->
+    <div id="loginGate" class="fixed inset-0 bg-[#fbf9f6] z-[100] flex items-center justify-center p-4 transition-all duration-500">
+        <div class="bg-white max-w-md w-full rounded-3xl p-8 shadow-xl border border-stone-100 text-center relative z-10">
+            <div class="w-16 h-16 bg-rose-50 text-rose-400 flex items-center justify-center mx-auto mb-6 text-2xl rounded-full">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h2 class="font-serif text-2xl font-bold text-stone-800 mb-2">Our Private Scrapbook</h2>
+            <p class="text-xs text-stone-500 mb-6">Enter your shared credentials to open our Year One journal.</p>
+            <form onsubmit="handleLogin(event)" class="space-y-4 text-left">
+                <div>
+                    <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Username</label>
+                    <input type="text" id="loginUser" required class="w-full px-4 py-2.5 text-sm rounded-xl border border-stone-200 focus:outline-none focus:ring-1 focus:ring-rose-400 bg-stone-50/50">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Password</label>
+                    <input type="password" id="loginPass" required class="w-full px-4 py-2.5 text-sm rounded-xl border border-stone-200 focus:outline-none focus:ring-1 focus:ring-rose-400 bg-stone-50/50">
+                </div>
+                <button type="submit" class="w-full py-3 bg-rose-400 hover:bg-rose-500 text-white font-semibold text-sm rounded-xl shadow-md transition-all mt-2">
+                    Unlock Memories
+                </button>
+            </form>
+            <p id="loginError" class="hidden text-xs text-red-500 mt-4 font-medium">Incorrect username or password. Try again! ❤️</p>
+        </div>
+    </div>
+
     <canvas id="heartsCanvas"></canvas>
 
     <!-- Header Status Ribbon -->
@@ -72,7 +108,8 @@
             <span>Cloud Sync Active 📱</span>
         </div>
         <div class="flex items-center gap-2">
-            <button onclick="sparkleHeartConfetti()" class="w-10 h-10 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center text-rose-400 hover:bg-rose-50" title="Love Sparkles"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+            <!-- Wand Icon triggers Color Customizer modal instead of only confetti -->
+            <button onclick="toggleThemeModal(true)" class="w-10 h-10 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center text-rose-400 hover:bg-rose-50 transition-all" title="Customize Colors"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
             <button onclick="toggleMemoryDrawer(true)" class="bg-rose-400 text-white rounded-full px-4 py-1.5 flex items-center gap-1.5 shadow-sm text-xs font-semibold"><i class="fa-solid fa-camera"></i> <span>Add Moment</span></button>
         </div>
     </div>
@@ -96,7 +133,8 @@
                 <i class="fa-solid fa-heart text-3xl text-rose-400"></i>
             </div>
         </div>
-        <h1 id="scrapbookTitle" class="font-serif text-4xl md:text-6xl text-gray-800 mb-3">Tess & Nicko: Year One</h1>
+        <!-- Title changed to 'Our Scrapbook' -->
+        <h1 id="scrapbookTitle" class="font-serif text-4xl md:text-6xl text-gray-800 mb-3">Our Scrapbook</h1>
         <p class="text-gray-500 max-w-xl mx-auto text-base font-light mb-8">Shared cloud timeline. Changes made on either phone update instantly!</p>
 
         <div class="bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-sm border border-stone-100 max-w-2xl mx-auto">
@@ -129,18 +167,69 @@
         <div id="polaroidContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8"></div>
     </div>
 
+    <!-- Inline Add Moment Bottom Panel (Replacing Quiz) -->
     <section class="relative z-10 max-w-3xl mx-auto px-4 mt-16">
-        <div class="bg-gradient-to-br from-rose-50 to-amber-50 rounded-3xl p-8 border border-rose-100 shadow-md text-center">
-            <h2 class="font-serif text-2xl text-stone-800">Unlock Your Letter</h2>
-            <div id="quizContainer" class="bg-white p-6 rounded-2xl max-w-lg mx-auto mt-4 shadow-sm">
-                <div id="quizQuestionBox">
-                    <p id="quizQuestionText" class="text-stone-700 font-medium text-sm mb-4">Quiz Loading...</p>
-                    <div id="quizOptions" class="space-y-2"></div>
-                </div>
-                <div id="quizSuccessBox" class="hidden py-4 text-center">
-                    <button onclick="toggleLoveLetter(true)" class="px-6 py-2 bg-rose-400 text-white rounded-full text-sm font-semibold shadow-md hover:bg-rose-500">Open Secret Letter</button>
-                </div>
+        <div class="bg-gradient-to-br from-rose-50 to-amber-50 rounded-3xl p-8 border border-rose-100 shadow-md">
+            <div class="text-center mb-6">
+                <span class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white text-rose-400 text-xl shadow-sm mb-3">
+                    <i class="fa-solid fa-camera-retro"></i>
+                </span>
+                <h2 class="font-serif text-2xl md:text-3xl text-stone-800">Add a New Chapter</h2>
+                <p class="text-xs text-stone-500 max-w-md mx-auto mt-2">
+                    Upload a photo, Live Photo, or video to instantly sync it to both of our phones.
+                </p>
             </div>
+
+            <!-- Unfolded form for seamless mobile writing -->
+            <form id="inlineMemoryForm" onsubmit="handleInlineMemoryFormSubmit(event)" class="bg-white/95 backdrop-blur-sm p-6 rounded-2xl max-w-xl mx-auto shadow-sm border border-stone-100/50 space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Moment Title *</label>
+                        <input type="text" id="inlineMemTitle" required placeholder="e.g. Italian Gelato Run" class="w-full px-3.5 py-2 text-sm rounded-xl border border-stone-200 focus:outline-none focus:ring-1 focus:ring-rose-400 bg-stone-50/50">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Category Tag *</label>
+                        <select id="inlineMemCategory" class="w-full px-3.5 py-2 text-sm rounded-xl border border-stone-200 focus:outline-none focus:ring-1 focus:ring-rose-400 bg-stone-50/50">
+                            <option value="Dates 🥐">Dates 🥐</option>
+                            <option value="Trips ✈️">Trips ✈️</option>
+                            <option value="Adventure ⛰️">Adventure ⛰️</option>
+                            <option value="Cozy 🏡">Cozy 🏡</option>
+                            <option value="Milestones 🏅">Milestones 🏅</option>
+                            <option value="Videos 🎥">Videos 🎥</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Date of Moment *</label>
+                        <input type="date" id="inlineMemDate" required class="w-full px-3.5 py-2 text-sm rounded-xl border border-stone-200 focus:outline-none focus:ring-1 focus:ring-rose-400 bg-stone-50/50">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">Media File (Photo or Video) *</label>
+                        <div class="relative flex items-center justify-center w-full h-[38px] border border-dashed border-stone-300 rounded-xl bg-stone-50 hover:bg-rose-50/50 transition-colors overflow-hidden">
+                            <span class="text-xs text-stone-500 font-medium truncate px-4" id="inlineMediaLabel">Choose file...</span>
+                            <input type="file" id="inlineMemFileInput" accept="image/*,video/*,image/heic,image/heif" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" onchange="compressAndProcessInlineImage(event)">
+                        </div>
+                        <input type="hidden" id="inlineMemImageUrl">
+                    </div>
+                </div>
+
+                <!-- Inline preview container -->
+                <div id="inlineImagePreviewContainer" class="hidden p-2 bg-stone-50 rounded-xl border border-stone-100 text-center">
+                    <div class="max-h-40 overflow-hidden rounded-lg mx-auto flex items-center justify-center" id="inlineMediaPreviewWrapper"></div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold uppercase text-stone-400 mb-1">The Story / Secret Memo *</label>
+                    <textarea id="inlineMemDescription" required rows="3" placeholder="Write down the cozy little details from this moment that made you smile..." class="w-full px-3.5 py-2 text-sm rounded-xl border border-stone-200 focus:outline-none focus:ring-1 focus:ring-rose-400 bg-stone-50/50"></textarea>
+                </div>
+
+                <button type="submit" class="w-full py-2.5 bg-rose-400 hover:bg-rose-500 text-white rounded-xl font-semibold text-sm shadow-md transition-all flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <span>Sync with Cloud Database</span>
+                </button>
+            </form>
         </div>
     </section>
 
@@ -167,6 +256,7 @@
                         <option value="Adventure ⛰️">Adventure ⛰️</option>
                         <option value="Cozy 🏡">Cozy 🏡</option>
                         <option value="Milestones 🏅">Milestones 🏅</option>
+                        <option value="Videos 🎥">Videos 🎥</option>
                     </select>
                 </div>
                 <div>
@@ -180,11 +270,11 @@
                             <i class="fa-solid fa-cloud-arrow-up text-xl text-stone-400 mb-1"></i>
                             <p class="text-xs font-semibold text-stone-600">Tap to upload / select from camera roll</p>
                         </div>
-                        <input type="file" id="memFileInput" accept="image/*,image/heic,image/heif" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" onchange="compressAndProcessImage(event)">
+                        <input type="file" id="memFileInput" accept="image/*,video/*,image/heic,image/heif" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" onchange="compressAndProcessImage(event)">
                     </div>
                     <input type="hidden" id="memImageUrl">
                     <div id="drawerImagePreviewContainer" class="hidden mt-2 p-2 bg-stone-50 rounded-lg text-center">
-                        <img src="" id="drawerImagePreview" class="max-h-24 rounded mx-auto object-cover">
+                        <div id="drawerMediaPreviewWrapper" class="max-h-24 overflow-hidden rounded mx-auto flex items-center justify-center"></div>
                     </div>
                 </div>
                 <div>
@@ -211,11 +301,37 @@
         </div>
     </div>
 
+    <!-- Theme Customizer Modal -->
+    <div id="themeModal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
+        <div class="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl relative transform scale-95 transition-transform duration-300" onclick="event.stopPropagation()">
+            <button onclick="toggleThemeModal(false)" class="absolute top-4 right-4 text-stone-400 hover:text-stone-700 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="text-center mb-6">
+                <span class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-rose-50 text-rose-500 text-xl shadow-sm mb-2">
+                    <i class="fa-solid fa-palette"></i>
+                </span>
+                <h3 class="font-serif text-xl font-bold text-stone-800">Customize Color Scheme</h3>
+                <p class="text-xs text-stone-500 mt-1">Select a beautiful custom theme palette for our scrapbook.</p>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4" id="themeModalPalettes">
+                <!-- Theme buttons will be rendered here dynamically -->
+            </div>
+            
+            <div class="mt-6 pt-4 border-t border-stone-100 flex justify-end">
+                <button onclick="toggleThemeModal(false)" class="px-5 py-2 bg-stone-800 text-white rounded-xl text-xs font-semibold hover:bg-stone-900 transition-all shadow-sm">
+                    Done
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Expanded view & editing triggers -->
     <div id="scrapbookModal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
         <div class="bg-white w-full max-w-xl rounded-3xl overflow-hidden shadow-2xl relative transform translate-y-4 transition-transform duration-300" onclick="event.stopPropagation()">
             <button onclick="closeModal()" class="absolute top-4 right-4 bg-white/80 text-stone-700 w-8 h-8 rounded-full flex items-center justify-center shadow-sm"><i class="fa-solid fa-xmark"></i></button>
-            <div class="w-full h-64 bg-stone-100 overflow-hidden"><img src="" alt="" class="w-full h-full object-cover" id="modalImage" onerror="window.handleImageLoadError(this)"></div>
+            <div class="w-full h-64 bg-stone-100 overflow-hidden relative" id="modalMediaContainer"></div>
             <div class="p-6">
                 <div class="text-xs font-bold text-rose-400 uppercase tracking-widest mb-1" id="modalDate">May 23, 2025</div>
                 <h2 class="font-serif text-xl font-bold text-stone-800 mb-2" id="modalTitle">Title</h2>
@@ -245,11 +361,18 @@
         let memories = [];
         let selectedCategory = "All";
         let viewMode = "timeline";
-        let quizStep = 0;
-        let quizPool = [];
 
         const defaultAnniversaryDate = "2025-05-23";
         const letterMasterText = "Looking back at this past year, every memory represents a beautiful adventure we built hand-in-hand. From running the Clapham Common parkrun on our first date on April 26th, shouting 'Dog Days' and sprinting to Muswell Hill, to staying next to Pisa and walking the walls of Lucca.\n\nIt took less than a month of knowing each other from that first run together to know with absolute certainty that I wanted you to be my girlfriend on May 23rd.\n\nThank you for sharing so many days in Liverpool with me, from the magical Candlelight concert to our endless brunches and roasts around the city. And of course, for running a whole half-marathon with me when I didn't even know I was running it until that very weekend! I was the one surprised, but I loved every second of it!\n\nYou are my absolute favorite runner, explorer, teammate, and partner. Here is to our wonderful first year and the endless milestones ahead of us!";
+
+        const themePalettes = {
+            rose: { name: "Dusty Rose 🌸", primary: '#d4a396', hover: '#9f6b5f', light: '#f5eae6', bg: '#fbf9f6', text: '#2d2d2d' },
+            sage: { name: "Forest Sage 🌿", primary: '#606c38', hover: '#283618', light: '#f4f9f1', bg: '#f9fbf7', text: '#2d3531' },
+            cherry: { name: "Velvet Cherry 🍒", primary: '#9e2a2b', hover: '#5e1914', light: '#fce8e6', bg: '#fffafb', text: '#2b1b17' },
+            amber: { name: "Golden Amber ☀", primary: '#b45309', hover: '#92400e', light: '#fef3c7', bg: '#fffdf5', text: '#1e1b4b' },
+            ocean: { name: "Deep Ocean 🌊", primary: '#0f766e', hover: '#115e59', light: '#ccfbf1', bg: '#f0fdfa', text: '#0f172a' },
+            lavender: { name: "Midnight Lavender 💜", primary: '#6d28d9', hover: '#4c1d95', light: '#ede9fe', bg: '#faf5ff', text: '#1e1b4b' }
+        };
 
         const defaultMemories = [
             {
@@ -339,12 +462,42 @@
         ];
 
         window.addEventListener('load', async () => {
+            checkAuth();
             updateLiveCounter();
             setInterval(updateLiveCounter, 1000);
             renderCategories();
             await fetchMemoriesFromCloud();
-            initQuiz();
+            applySavedTheme();
         });
+
+        function checkAuth() {
+            if (sessionStorage.getItem('authenticated') === 'true') {
+                document.getElementById('loginGate').classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            } else {
+                document.getElementById('loginGate').classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const user = document.getElementById('loginUser').value.trim();
+            const pass = document.getElementById('loginPass').value;
+            const error = document.getElementById('loginError');
+
+            if (user === 'NickoTess2305' && pass === 'ClaphamCommon!1') {
+                sessionStorage.setItem('authenticated', 'true');
+                document.getElementById('loginGate').classList.add('opacity-0');
+                setTimeout(() => {
+                    document.getElementById('loginGate').classList.add('hidden');
+                    document.body.classList.remove('overflow-hidden');
+                }, 500);
+                sparkleHeartConfetti();
+            } else {
+                error.classList.remove('hidden');
+            }
+        }
 
         async function fetchMemoriesFromCloud() {
             let { data, error } = await _supabase.from('memories').select('*').order('date', { ascending: true });
@@ -355,7 +508,6 @@
             }
             memories = data || [];
             
-            // Show Seeding assistant if DB has zero moments
             const seedBanner = document.getElementById('seedingBanner');
             if (memories.length === 0) {
                 seedBanner.classList.remove('hidden');
@@ -398,7 +550,8 @@
         function renderCategories() {
             const container = document.getElementById('categoriesContainer');
             container.innerHTML = '';
-            const standardCategories = ["All", "Dates 🥐", "Trips ✈️", "Adventure ⛰️", "Cozy 🏡", "Milestones 🏅"];
+            // Added 'Videos 🎥' to standard categories
+            const standardCategories = ["All", "Dates 🥐", "Trips ✈️", "Adventure ⛰️", "Cozy 🏡", "Milestones 🏅", "Videos 🎥"];
             standardCategories.forEach(cat => {
                 const isSelected = selectedCategory === cat;
                 const activeClass = isSelected ? 'bg-stone-800 text-white shadow-sm' : 'bg-white text-stone-600 border border-stone-100';
@@ -454,7 +607,7 @@
                     <div class="absolute left-6 md:left-1/2 transform -translate-x-1/2 w-4 h-4 rounded-full bg-white border-2 border-rose-400 z-20"></div>
                     <div class="w-full md:w-1/2 ${index % 2 === 0 ? 'md:pl-12' : 'md:pr-12'} pl-12 md:pl-0 mt-2 md:mt-0">
                         <div class="w-full h-36 rounded-xl overflow-hidden border bg-stone-100">
-                            <img src="${photoSrc}" class="w-full h-full object-cover" onerror="window.handleImageLoadError(this)">
+                            ${window.getMediaHTML(photoSrc, "w-full h-full object-cover")}
                         </div>
                     </div>
                 `;
@@ -466,7 +619,7 @@
                 pCard.onclick = () => openModal(mem);
                 pCard.innerHTML = `
                     <div class="aspect-square overflow-hidden border relative">
-                        <img src="${photoSrc}" class="w-full h-full object-cover" onerror="window.handleImageLoadError(this)">
+                        ${window.getMediaHTML(photoSrc, "w-full h-full object-cover")}
                     </div>
                     <div class="mt-4 text-center">
                         <div class="text-[9px] text-stone-400 tracking-widest font-bold">${rawDate}</div>
@@ -479,20 +632,20 @@
 
         function openModal(mem) {
             const modal = document.getElementById('scrapbookModal');
-            document.getElementById('modalImage').src = mem.image_url || '';
+            const mediaContainer = document.getElementById('modalMediaContainer');
+            
+            mediaContainer.innerHTML = window.getMediaHTML(mem.image_url, "w-full h-full object-cover");
+
             document.getElementById('modalDate').innerText = new Date(mem.date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
             document.getElementById('modalTitle').innerText = mem.title;
             document.getElementById('modalText').innerText = mem.description;
             document.getElementById('modalTag').innerText = mem.category;
             
-            // Wire Edit button inside modal dynamically
             document.getElementById('modalEditBtn').onclick = () => {
                 openEditDrawer(mem);
             };
 
-            // Delete button mapping directly to Supabase row removal
             document.getElementById('modalDeleteBtn').onclick = async () => {
-                showToast("Deleting... ⏳");
                 const { error } = await _supabase.from('memories').delete().eq('id', mem.id);
                 if (!error) {
                     showToast("Memory removed from cloud database! ✨");
@@ -525,14 +678,19 @@
             document.getElementById('drawerTitle').innerHTML = `<i class="fa-solid fa-edit text-rose-400"></i> Edit Cloud Moment`;
             document.getElementById('memSubmitButton').innerText = "Update Cloud Memory";
 
-            if (mem.image_url) {
-                document.getElementById('drawerImagePreview').src = mem.image_url;
-                document.getElementById('drawerImagePreviewContainer').classList.remove('hidden');
-            } else {
-                document.getElementById('drawerImagePreviewContainer').classList.add('hidden');
-            }
-
+            updateDrawerPreview(mem.image_url);
             toggleMemoryDrawer(true);
+        }
+
+        function updateDrawerPreview(url) {
+            const wrapper = document.getElementById('drawerMediaPreviewWrapper');
+            if (!url) {
+                wrapper.innerHTML = '';
+                document.getElementById('drawerImagePreviewContainer').classList.add('hidden');
+                return;
+            }
+            wrapper.innerHTML = window.getMediaHTML(url, "max-h-24 rounded mx-auto object-cover");
+            document.getElementById('drawerImagePreviewContainer').classList.remove('hidden');
         }
 
         function toggleMemoryDrawer(open = true) {
@@ -541,7 +699,6 @@
                 drawer.classList.remove('translate-x-full'); 
             } else { 
                 drawer.classList.add('translate-x-full'); 
-                // Restore form to creation status defaults
                 document.getElementById('editMemoryIndex').value = "";
                 document.getElementById('memoryForm').reset();
                 document.getElementById('drawerTitle').innerHTML = `<i class="fa-solid fa-camera text-rose-400"></i> Add Beautiful Memory`;
@@ -553,12 +710,30 @@
         async function compressAndProcessImage(event) {
             const file = event.target.files[0];
             if (!file) return;
-            showToast("Processing camera file... ⌛");
+            showToast("Processing media file... ⌛");
+
+            const fileNameLower = file.name.toLowerCase();
+            const isVideoFile = file.type.startsWith('video/') || fileNameLower.match(/\.(mp4|mov|webm|ogg)/i);
+
+            if (isVideoFile) {
+                if (file.size > 15 * 1024 * 1024) { 
+                    showToast("Video is too large (15MB limit). ⚠️");
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('memImageUrl').value = e.target.result;
+                    updateDrawerPreview(e.target.result);
+                    showToast("Video parsed successfully! 🎥");
+                };
+                reader.readAsDataURL(file);
+                return;
+            }
 
             let imgFile = file;
-            if (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) {
+            if (fileNameLower.endsWith('.heic') || fileNameLower.endsWith('.heif')) {
                 try {
-                    const converted = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.6 });
+                    const converted = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.8 });
                     imgFile = Array.isArray(converted) ? converted[0] : converted;
                 } catch (e) { console.error(e); }
             }
@@ -568,7 +743,7 @@
                 const img = new Image();
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
-                    const MAX_BOUND = 400;
+                    const MAX_BOUND = 1080;
                     let w = img.width, h = img.height;
                     if (w > h ? w > MAX_BOUND : h > MAX_BOUND) {
                         if (w > h) { h *= MAX_BOUND / w; w = MAX_BOUND; }
@@ -578,10 +753,73 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, w, h);
                     
-                    const compressedData = canvas.toDataURL('image/jpeg', 0.55);
+                    const compressedData = canvas.toDataURL('image/jpeg', 0.80);
                     document.getElementById('memImageUrl').value = compressedData;
-                    document.getElementById('drawerImagePreview').src = compressedData;
-                    document.getElementById('drawerImagePreviewContainer').classList.remove('hidden');
+                    updateDrawerPreview(compressedData);
+                    showToast("Photo processed natively! 📸");
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(imgFile);
+        }
+
+        async function compressAndProcessInlineImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const label = document.getElementById('inlineMediaLabel');
+            label.innerText = file.name;
+
+            showToast("Processing media file... ⌛");
+
+            const fileNameLower = file.name.toLowerCase();
+            const isVideoFile = file.type.startsWith('video/') || fileNameLower.match(/\.(mp4|mov|webm|ogg)/i);
+
+            if (isVideoFile) {
+                if (file.size > 15 * 1024 * 1024) { 
+                    showToast("Video is too large (15MB limit). ⚠️");
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('inlineMemImageUrl').value = e.target.result;
+                    const previewWrapper = document.getElementById('inlineMediaPreviewWrapper');
+                    previewWrapper.innerHTML = `<video src="${e.target.result}" class="max-h-40 rounded-lg object-cover" controls muted playsinline></video>`;
+                    document.getElementById('inlineImagePreviewContainer').classList.remove('hidden');
+                    showToast("Video parsed successfully! 🎥");
+                };
+                reader.readAsDataURL(file);
+                return;
+            }
+
+            let imgFile = file;
+            if (fileNameLower.endsWith('.heic') || fileNameLower.endsWith('.heif')) {
+                try {
+                    const converted = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.8 });
+                    imgFile = Array.isArray(converted) ? converted[0] : converted;
+                } catch (e) { console.error(e); }
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_BOUND = 1080;
+                    let w = img.width, h = img.height;
+                    if (w > h ? w > MAX_BOUND : h > MAX_BOUND) {
+                        if (w > h) { h *= MAX_BOUND / w; w = MAX_BOUND; }
+                        else { w *= MAX_BOUND / h; h = MAX_BOUND; }
+                    }
+                    canvas.width = w; canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    
+                    const compressedData = canvas.toDataURL('image/jpeg', 0.80);
+                    document.getElementById('inlineMemImageUrl').value = compressedData;
+                    const previewWrapper = document.getElementById('inlineMediaPreviewWrapper');
+                    previewWrapper.innerHTML = `<img src="${compressedData}" class="max-h-40 rounded-lg object-cover">`;
+                    document.getElementById('inlineImagePreviewContainer').classList.remove('hidden');
                     showToast("Photo processed natively! 📸");
                 };
                 img.src = e.target.result;
@@ -605,10 +843,8 @@
 
             let response;
             if (editId) {
-                // Update existing row
                 response = await _supabase.from('memories').update(payload).eq('id', editId);
             } else {
-                // Insert brand new row
                 response = await _supabase.from('memories').insert([payload]);
             }
 
@@ -624,34 +860,126 @@
             }
         }
 
-        function initQuiz() {
-            quizPool = [
-                { q: "Where was our very first date on April 26th where we ran through the park?", options: ["Richmond Park", "Hampstead Heath", "Clapham Common"], correct: "Clapham Common" },
-                { q: "In what town did we spend a cozy October weekend inside a beautiful shepherds hut?", options: ["Pisa", "Ashbourne", "Lucca"], correct: "Ashbourne" },
-                { q: "In the surprise Liverpool Half-Marathon, who was completely unaware they were running until that very weekend?", options: ["Tess", "Nicko", "Both of us"], correct: "Nicko" }
-            ];
-            quizStep = 0; showQuizQuestion();
+        async function handleInlineMemoryFormSubmit(event) {
+            event.preventDefault();
+            showToast("Saving changes to Supabase... ⚡");
+
+            const payload = {
+                title: document.getElementById('inlineMemTitle').value,
+                category: document.getElementById('inlineMemCategory').value,
+                date: document.getElementById('inlineMemDate').value,
+                image_url: document.getElementById('inlineMemImageUrl').value,
+                description: document.getElementById('inlineMemDescription').value
+            };
+
+            const { error } = await _supabase.from('memories').insert([payload]);
+            if (!error) {
+                showToast("New memory successfully saved online! 📱");
+                document.getElementById('inlineMemoryForm').reset();
+                document.getElementById('inlineMediaLabel').innerText = "Choose file...";
+                document.getElementById('inlineImagePreviewContainer').classList.add('hidden');
+                sparkleHeartConfetti();
+                await fetchMemoriesFromCloud();
+            } else {
+                showToast("Cloud writing failed. Check DB table constraints! ❌");
+                console.error(error);
+            }
         }
 
-        function showQuizQuestion() {
-            if (quizStep >= quizPool.length) {
-                document.getElementById('quizQuestionBox').classList.add('hidden');
-                document.getElementById('quizSuccessBox').classList.remove('hidden');
-                return;
+        // Color Scheme Customizer logic
+        function applySavedTheme() {
+            const savedTheme = localStorage.getItem('scrapbook_theme') || 'rose';
+            applyThemePalette(savedTheme);
+        }
+
+        function applyThemePalette(themeKey) {
+            const palette = themePalettes[themeKey] || themePalettes.rose;
+            localStorage.setItem('scrapbook_theme', themeKey);
+            
+            document.documentElement.style.setProperty('--theme-accent', palette.primary);
+            document.documentElement.style.setProperty('--theme-bg', palette.bg);
+
+            const styleId = "dynamic-theme-overrides";
+            let styleTag = document.getElementById(styleId);
+            if (!styleTag) {
+                styleTag = document.createElement('style');
+                styleTag.id = styleId;
+                document.head.appendChild(styleTag);
             }
-            const activeQ = quizPool[quizStep];
-            document.getElementById('quizQuestionText').innerText = activeQ.q;
-            const oBox = document.getElementById('quizOptions'); oBox.innerHTML = '';
-            activeQ.options.forEach(opt => {
+            
+            styleTag.innerHTML = `
+                .bg-rose-400 { background-color: ${palette.primary} !important; }
+                .hover\\:bg-rose-500:hover { background-color: ${palette.hover} !important; }
+                .text-rose-400 { color: ${palette.primary} !important; }
+                .text-rose-500 { color: ${palette.primary} !important; }
+                .text-rose-900 { color: ${palette.hover} !important; }
+                .border-rose-400 { border-color: ${palette.primary} !important; }
+                .ring-rose-200 { --tw-ring-color: ${palette.light} !important; }
+                .bg-rose-50 { background-color: ${palette.light} !important; }
+                .bg-rose-50\\/50 { background-color: rgba(${hexToRgb(palette.light)}, 0.5) !important; }
+                .bg-gradient-to-br { background-image: linear-gradient(to bottom right, ${palette.light}, #fffcf8) !important; }
+            `;
+            document.body.style.backgroundColor = palette.bg;
+        }
+
+        function hexToRgb(hex) {
+            hex = hex.replace('#', '');
+            if (hex.length === 3) {
+                hex = hex.split('').map(char => char + char).join('');
+            }
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            return `${r}, ${g}, ${b}`;
+        }
+
+        function renderThemeModalPalettes() {
+            const container = document.getElementById('themeModalPalettes');
+            container.innerHTML = '';
+            
+            const savedTheme = localStorage.getItem('scrapbook_theme') || 'rose';
+            
+            Object.keys(themePalettes).forEach(key => {
+                const palette = themePalettes[key];
+                const isSelected = savedTheme === key;
+                
                 const btn = document.createElement('button');
-                btn.className = "w-full text-left px-4 py-2 text-xs font-semibold rounded-lg bg-stone-50 border border-stone-200 text-stone-700 hover:bg-rose-50";
-                btn.innerText = opt;
+                btn.type = 'button';
+                btn.className = `flex flex-col items-center p-3 rounded-2xl border transition-all ${
+                    isSelected ? 'border-stone-800 bg-stone-50 ring-2 ring-stone-200' : 'border-stone-200 bg-white hover:bg-stone-50'
+                }`;
                 btn.onclick = () => {
-                    if (opt === activeQ.correct) { quizStep++; showQuizQuestion(); }
-                    else { showToast("Not quite right! Try again. ❤️"); }
+                    applyThemePalette(key);
+                    renderThemeModalPalettes();
+                    sparkleHeartConfetti();
+                    showToast(`Theme changed to ${palette.name}! ✨`);
                 };
-                oBox.appendChild(btn);
+                
+                btn.innerHTML = `
+                    <div class="flex gap-1 mb-2">
+                        <span class="w-4 h-4 rounded-full" style="background-color: ${palette.primary}"></span>
+                        <span class="w-4 h-4 rounded-full" style="background-color: ${palette.light}"></span>
+                        <span class="w-4 h-4 rounded-full" style="background-color: ${palette.bg}"></span>
+                    </div>
+                    <span class="text-xs font-semibold text-stone-700">${palette.name}</span>
+                `;
+                container.appendChild(btn);
             });
+        }
+
+        function toggleThemeModal(open = true) {
+            const modal = document.getElementById('themeModal');
+            if (open) {
+                renderThemeModalPalettes();
+                modal.classList.add('opacity-100');
+                modal.classList.remove('pointer-events-none');
+                modal.querySelector('.transform').classList.remove('scale-95');
+                playSoftChime();
+            } else {
+                modal.classList.remove('opacity-100');
+                modal.classList.add('pointer-events-none');
+                modal.querySelector('.transform').classList.add('scale-95');
+            }
         }
 
         function toggleLoveLetter(open = true) {
@@ -699,6 +1027,27 @@
             const t = document.getElementById('toast'); document.getElementById('toastMessage').innerText = m;
             t.classList.remove('opacity-0', 'pointer-events-none'); t.classList.add('opacity-100');
             if (tOut) clearTimeout(tOut); tOut = setTimeout(() => { t.classList.add('opacity-0', 'pointer-events-none'); }, 3000);
+        }
+
+        // Soft sound initialization
+        let ambientSynth = null;
+        function initSynth() {
+            if (!ambientSynth) {
+                ambientSynth = new Tone.PolySynth().toDestination();
+                ambientSynth.set({
+                    oscillator: { type: "sine" },
+                    envelope: { attack: 0.1, decay: 0.2, sustain: 0.8, release: 1.2 }
+                });
+                ambientSynth.volume.value = -12;
+            }
+        }
+        function playSoftChime() {
+            try {
+                initSynth();
+                const notes = ["C5", "E5", "G5", "C6"];
+                const randomNote = notes[Math.floor(Math.random() * notes.length)];
+                ambientSynth.triggerAttackRelease(randomNote, "4n");
+            } catch (e) {}
         }
     </script>
 </body>
