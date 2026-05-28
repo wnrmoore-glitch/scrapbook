@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tess & Nicko: Our Cloud Scrapbook</title>
+    
+    <!-- Tailwind CSS & FontAwesome Icons -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Global Image Error Fallback definition -->
+    <script>
+        window.imageFallbacks = {
+            "Tess_Nicko_Boat.JPG": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=600",
+            "Candlelight.jpg": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=600",
+            "Climb.jpg": "https://images.unsplash.com/photo-1501555088652-021faa106b9b?q=80&w=600",
+            "Us_Ivy.JPG": "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?q=80&w=600",
+            "Tess_IVY.jpg": "https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=600",
+            "TN_Flor.jpg": "https://images.unsplash.com/photo-1528114039593-4366cc08227d?q=80&w=600",
+            "Us_AS.jpg": "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=600"
+        };
+
+        window.handleImageLoadError = function(img) {
+            const srcAttr = img.getAttribute('src');
+            if (srcAttr && window.imageFallbacks[srcAttr]) { 
+                img.src = window.imageFallbacks[srcAttr]; 
+            } else if (img.src !== "https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&w=600&q=80") {
+                img.src = "https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&w=600&q=80"; 
+            }
+        };
+    </script>
+
+    <!-- Tone.js, heic2any, and official Cloud Database SDK -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        serif: ['"Playfair Display"', 'serif'],
+                        handwriting: ['"Caveat"', 'cursive'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        html { scroll-behavior: smooth; }
+        #heartsCanvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 1; }
+        .polaroid-card { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .polaroid-card:hover { transform: translateY(-8px) rotate(1.5deg); box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08); }
+        .polaroid-card:nth-child(even):hover { transform: translateY(-8px) rotate(-1.5deg); }
+        :root { --theme-accent: #d4a396; --theme-bg: #fbf9f6; }
+    </style>
+</head>
+<body class="bg-[#fbf9f6] text-[#2d2d2d] font-sans antialiased min-h-screen relative overflow-x-hidden pb-16">
+
+    <canvas id="heartsCanvas"></canvas>
+
+    <!-- Header Status Ribbon -->
+    <div class="relative z-10 max-w-7xl mx-auto px-4 pt-4 flex justify-between items-center">
+        <div class="flex items-center gap-2 bg-white/75 backdrop-blur-md py-1.5 px-3 rounded-full border border-pink-100 shadow-sm text-xs font-semibold text-gray-600">
+            <span class="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse"></span>
+            <span>Cloud Sync Active 📱</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="sparkleHeartConfetti()" class="w-10 h-10 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center text-rose-400 hover:bg-rose-50" title="Love Sparkles"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+            <button onclick="toggleMemoryDrawer(true)" class="bg-rose-400 text-white rounded-full px-4 py-1.5 flex items-center gap-1.5 shadow-sm text-xs font-semibold"><i class="fa-solid fa-camera"></i> <span>Add Moment</span></button>
+        </div>
+    </div>
+
+    <!-- Live Cloud Seeding Assistant Banner -->
+    <div id="seedingBanner" class="hidden relative z-10 max-w-2xl mx-auto px-4 mt-6">
+        <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4 text-center sm:text-left">
+            <div>
+                <h4 class="font-serif font-bold text-amber-900 text-sm">Welcome to your Cloud Database! ☁️</h4>
+                <p class="text-xs text-amber-700 mt-0.5">Your Supabase database table is empty. Tap seed to instantly import your 12 default love story moments and photos!</p>
+            </div>
+            <button onclick="seedDefaultMemories()" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all whitespace-nowrap">
+                Seed Love Story
+            </button>
+        </div>
+    </div>
+
+    <header class="relative z-10 text-center max-w-4xl mx-auto px-4 mt-12 mb-10">
+        <div class="inline-block relative mb-4">
+            <div class="w-20 h-20 rounded-full bg-white shadow-md flex items-center justify-center border-4 border-white ring-2 ring-rose-200 cursor-pointer" onclick="sparkleHeartConfetti()">
+                <i class="fa-solid fa-heart text-3xl text-rose-400"></i>
+            </div>
+        </div>
+        <h1 id="scrapbookTitle" class="font-serif text-4xl md:text-6xl text-gray-800 mb-3">Tess & Nicko: Year One</h1>
+        <p class="text-gray-500 max-w-xl mx-auto text-base font-light mb-8">Shared cloud timeline. Changes made on either phone update instantly!</p>
+
+        <div class="bg-white/80 backdrop-blur-md rounded-2xl p-6 shadow-sm border border-stone-100 max-w-2xl mx-auto">
+            <div class="grid grid-cols-4 gap-4">
+                <div><div id="counter-days" class="text-2xl md:text-3xl font-serif font-bold text-rose-900">000</div><div class="text-[10px] uppercase text-stone-500 mt-1">Days</div></div>
+                <div><div id="counter-hours" class="text-2xl md:text-3xl font-serif font-bold text-rose-900">00</div><div class="text-[10px] uppercase text-stone-500 mt-1">Hours</div></div>
+                <div><div id="counter-minutes" class="text-2xl md:text-3xl font-serif font-bold text-rose-900">00</div><div class="text-[10px] uppercase text-stone-500 mt-1">Mins</div></div>
+                <div><div id="counter-seconds" class="text-2xl md:text-3xl font-serif font-bold text-rose-900">00</div><div class="text-[10px] uppercase text-stone-500 mt-1">Secs</div></div>
+            </div>
+        </div>
+    </header>
+
+    <div class="relative z-10 max-w-6xl mx-auto px-4 mb-8">
+        <div class="flex flex-col md:flex-row gap-4 justify-between items-center bg-white/75 backdrop-blur-md p-3 rounded-2xl border border-stone-100 shadow-sm">
+            <div class="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1" id="categoriesContainer"></div>
+            <div class="flex items-center gap-3 w-full md:w-auto">
+                <div class="flex bg-stone-100 p-1 rounded-full items-center ml-auto">
+                    <button onclick="setViewMode('timeline')" id="btnViewTimeline" class="px-3 py-1 rounded-full text-xs font-medium bg-white text-gray-800 shadow-sm">Timeline</button>
+                    <button onclick="setViewMode('polaroid')" id="btnViewPolaroid" class="px-3 py-1 rounded-full text-xs font-medium text-gray-500">Polaroids</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="timelineView" class="relative z-10 max-w-4xl mx-auto px-4 py-4">
+        <div class="absolute left-6 md:left-1/2 transform md:-translate-x-1/2 top-0 bottom-0 w-1 bg-stone-200 rounded-full"></div>
+        <div id="timelineContainer" class="space-y-12"></div>
+    </div>
+    <div id="polaroidView" class="hidden relative z-10 max-w-6xl mx-auto px-4 py-4">
+        <div id="polaroidContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8"></div>
+    </div>
+
+    <section class="relative z-10 max-w-3xl mx-auto px-4 mt-16">
+        <div class="bg-gradient-to-br from-rose-50 to-amber-50 rounded-3xl p-8 border border-rose-100 shadow-md text-center">
+            <h2 class="font-serif text-2xl text-stone-800">Unlock Your Letter</h2>
+            <div id="quizContainer" class="bg-white p-6 rounded-2xl max-w-lg mx-auto mt-4 shadow-sm">
+                <div id="quizQuestionBox">
+                    <p id="quizQuestionText" class="text-stone-700 font-medium text-sm mb-4">Quiz Loading...</p>
+                    <div id="quizOptions" class="space-y-2"></div>
+                </div>
+                <div id="quizSuccessBox" class="hidden py-4 text-center">
+                    <button onclick="toggleLoveLetter(true)" class="px-6 py-2 bg-rose-400 text-white rounded-full text-sm font-semibold shadow-md hover:bg-rose-500">Open Secret Letter</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Add/Edit Memory Drawer -->
+    <div id="memoryDrawer" class="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 overflow-y-auto border-l border-stone-100">
+        <div class="p-6">
+            <div class="flex justify-between items-center pb-4 border-b">
+                <h3 id="drawerTitle" class="font-serif text-xl font-semibold text-stone-800"><i class="fa-solid fa-camera text-rose-400"></i> Add Beautiful Memory</h3>
+                <button onclick="toggleMemoryDrawer(false)" class="text-stone-400 hover:text-stone-700"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="memoryForm" onsubmit="handleMemoryFormSubmit(event)" class="space-y-5 mt-6">
+                <!-- Row ID if editing -->
+                <input type="hidden" id="editMemoryIndex" value="">
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-stone-500 mb-1">Moment Title *</label>
+                    <input type="text" id="memTitle" required class="w-full px-3.5 py-2 text-sm rounded-lg border focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-stone-500 mb-1">Category *</label>
+                    <select id="memCategory" class="w-full px-3.5 py-2 text-sm rounded-lg border">
+                        <option value="Dates 🥐">Dates 🥐</option>
+                        <option value="Trips ✈️">Trips ✈️</option>
+                        <option value="Adventure ⛰️">Adventure ⛰️</option>
+                        <option value="Cozy 🏡">Cozy 🏡</option>
+                        <option value="Milestones 🏅">Milestones 🏅</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-stone-500 mb-1">Date *</label>
+                    <input type="date" id="memDate" required class="w-full px-3.5 py-2 text-sm rounded-lg border">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-stone-500 mb-1">Upload Photo</label>
+                    <div class="relative flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-lg bg-stone-50 hover:bg-rose-50/50 transition-colors">
+                        <div class="text-center p-4 pointer-events-none">
+                            <i class="fa-solid fa-cloud-arrow-up text-xl text-stone-400 mb-1"></i>
+                            <p class="text-xs font-semibold text-stone-600">Tap to upload / select from camera roll</p>
+                        </div>
+                        <input type="file" id="memFileInput" accept="image/*,image/heic,image/heif" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full" onchange="compressAndProcessImage(event)">
+                    </div>
+                    <input type="hidden" id="memImageUrl">
+                    <div id="drawerImagePreviewContainer" class="hidden mt-2 p-2 bg-stone-50 rounded-lg text-center">
+                        <img src="" id="drawerImagePreview" class="max-h-24 rounded mx-auto object-cover">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-stone-500 mb-1">The Story / Secret Memo *</label>
+                    <textarea id="memDescription" required rows="3" class="w-full px-3.5 py-2 text-sm rounded-lg border focus:outline-none"></textarea>
+                </div>
+                <div class="pt-4 border-t flex gap-2">
+                    <button type="button" onclick="toggleMemoryDrawer(false)" class="w-full py-2 border rounded-lg text-xs font-semibold text-stone-500">Cancel</button>
+                    <button type="submit" id="memSubmitButton" class="w-full py-2 bg-rose-400 text-white rounded-lg text-xs font-semibold shadow-md hover:bg-rose-500">Save Memory</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Love Letter envelope -->
+    <div id="loveLetterModal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-[#fcfaf5] w-full max-w-xl rounded-3xl overflow-hidden shadow-2xl relative max-h-[85vh] flex flex-col">
+            <button onclick="toggleLoveLetter(false)" class="absolute top-6 right-6 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center text-stone-500"><i class="fa-solid fa-xmark"></i></button>
+            <div class="p-8 overflow-y-auto flex-1 font-serif text-stone-800 leading-relaxed">
+                <h3 class="text-2xl italic mb-4">Dear Tess,</h3>
+                <p id="letterText" class="font-handwriting text-2xl text-stone-700 whitespace-pre-line leading-relaxed">Letter text...</p>
+                <div class="mt-6 pt-4 border-t font-handwriting text-2xl text-stone-500">Always & forever,<br><span class="font-bold text-rose-500">Nicko</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expanded view & editing triggers -->
+    <div id="scrapbookModal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
+        <div class="bg-white w-full max-w-xl rounded-3xl overflow-hidden shadow-2xl relative transform translate-y-4 transition-transform duration-300" onclick="event.stopPropagation()">
+            <button onclick="closeModal()" class="absolute top-4 right-4 bg-white/80 text-stone-700 w-8 h-8 rounded-full flex items-center justify-center shadow-sm"><i class="fa-solid fa-xmark"></i></button>
+            <div class="w-full h-64 bg-stone-100 overflow-hidden"><img src="" alt="" class="w-full h-full object-cover" id="modalImage" onerror="window.handleImageLoadError(this)"></div>
+            <div class="p-6">
+                <div class="text-xs font-bold text-rose-400 uppercase tracking-widest mb-1" id="modalDate">May 23, 2025</div>
+                <h2 class="font-serif text-xl font-bold text-stone-800 mb-2" id="modalTitle">Title</h2>
+                <p class="text-stone-600 text-sm font-light leading-relaxed whitespace-pre-line" id="modalText">Story...</p>
+                <div class="mt-4 pt-4 border-t flex items-center justify-between">
+                    <span class="text-[10px] text-stone-400" id="modalTag">Category</span>
+                    <div class="flex items-center gap-1.5">
+                        <button id="modalEditBtn" class="px-3.5 py-1 rounded-full text-xs font-semibold border text-stone-600 hover:bg-stone-50"><i class="fa-solid fa-edit"></i> Edit</button>
+                        <button id="modalDeleteBtn" class="px-3.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-500 hover:bg-rose-100"><i class="fa-regular fa-trash-can"></i> Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-stone-900 text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-lg z-50 flex items-center gap-2 opacity-0 pointer-events-none transition-all duration-300">
+        <i class="fa-solid fa-heart text-rose-400 animate-pulse"></i><span id="toastMessage">Notification</span>
+    </div>
+
+    <script>
+        // Set up the cloud configurations dynamically
+        const SUPABASE_URL = "https://vxayhkmyjhrliyevpuzu.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_7D9R30wTUbRg0ZlSk7_XPQ_ySv47xeB";
+        
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let memories = [];
+        let selectedCategory = "All";
+        let viewMode = "timeline";
+        let quizStep = 0;
+        let quizPool = [];
+
+        const defaultAnniversaryDate = "2025-05-23";
+        const letterMasterText = "Looking back at this past year, every memory represents a beautiful adventure we built hand-in-hand. From running the Clapham Common parkrun on our first date on April 26th, shouting 'Dog Days' and sprinting to Muswell Hill, to staying next to Pisa and walking the walls of Lucca.\n\nIt took less than a month of knowing each other from that first run together to know with absolute certainty that I wanted you to be my girlfriend on May 23rd.\n\nThank you for sharing so many days in Liverpool with me, from the magical Candlelight concert to our endless brunches and roasts around the city. And of course, for running a whole half-marathon with me when I didn't even know I was running it until that very weekend! I was the one surprised, but I loved every second of it!\n\nYou are my absolute favorite runner, explorer, teammate, and partner. Here is to our wonderful first year and the endless milestones ahead of us!";
+
+        const defaultMemories = [
+            {
+                date: "2025-04-26",
+                title: "Our First Date: Clapham Common Parkrun",
+                category: "Dates 🥐",
+                image_url: "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?q=80&w=600&auto=format&fit=crop",
+                description: "What an absolutely epic first date! We ran the Clapham Common parkrun, realized we both have an obsession with Florence and the Machine, discovered our mutual love for 'Dog Days Are Over', and ended up spontaneously running down the road to Muswell Hill! It took less than a month since this magical morning of April 26th to realize I wanted her to be my girlfriend."
+            },
+            {
+                date: "2025-05-23",
+                title: "The Day We Got Together",
+                category: "Milestones 🏅",
+                image_url: "Tess_Nicko_Boat.JPG",
+                description: "The official start of us! May 23rd marks the beginning of our unforgettable story. It took less than a single month since our first date on April 26th to make things official, and it's been the best decision ever. Sitting on the boat, taking in the sunny water, there was no looking back."
+            },
+            {
+                date: "2025-06-18",
+                title: "Views from The Shard",
+                category: "Dates 🥐",
+                image_url: "https://images.unsplash.com/photo-1513635269975-59663e0ca1ad?q=80&w=600&auto=format&fit=crop",
+                description: "A gorgeous, sparkling date night high above London. Looking out at the endless city lights from the top of The Shard with Tess made the world feel quiet."
+            },
+            {
+                date: "2025-08-14",
+                title: "Candlelight Concert in Liverpool",
+                category: "Dates 🥐",
+                image_url: "Candlelight.jpg",
+                description: "Surrounded by hundreds of glowing candles, we listened to beautiful live string renditions. A perfect, intimate highlight of our early days in Liverpool."
+            },
+            {
+                date: "2025-10-18",
+                title: "Shepherds Hut in Ashbourne & Peak Climbs",
+                category: "Trips ✈️",
+                image_url: "Climb.jpg",
+                description: "Winding down near Ashbourne in a cozy shepherds hut. Hiking and climbing up the gorgeous green hills under a bright sky. A crisp October weekend spent completely unplugged, laughing under the starlight, and sitting by the woodburner."
+            },
+            {
+                date: "2025-11-08",
+                title: "Party Nights: Albert's Schloss!",
+                category: "Adventure ⛰️",
+                image_url: "Us_AS.jpg",
+                description: "Dressing up and dancing the night away under the neon lights in Liverpool! We always bring the best energy, the biggest laughs, and absolute best moves to the dancefloor."
+            },
+            {
+                date: "2025-11-20",
+                title: "Sundays in Liverpool & Mirror Selfies",
+                category: "Cozy 🏡",
+                image_url: "Us_Ivy.JPG",
+                description: "I have spent so many incredible days here. Between cozy brunches, taking gorgeous mirror selfies when dressed up on our dinner dates, and walking through the city streets, Liverpool has become a second home."
+            },
+            {
+                date: "2025-12-15",
+                title: "Liverpool Roasts, Brunches & The Ivy",
+                category: "Dates 🥐",
+                image_url: "Tess_IVY.jpg",
+                description: "Enjoying cozy breakfasts, piled-high brunch tables, and the absolute best Sunday roasts with gravy poured over everything. Eating our way through Liverpool's best spots—like sitting under the stunning decorative ceilings at The Ivy—is our specialty!"
+            },
+            {
+                date: "2026-04-12",
+                title: "Italian Adventures: Lucca & Florence",
+                category: "Trips ✈️",
+                image_url: "TN_Flor.jpg",
+                description: "Exploring the legendary historic town of Lucca and the gorgeous terracotta rooftops of Florence. Smiling right in front of the Duomo, gelato in hand, walking along ancient fortress walls, and soaking up the Tuscan sun."
+            },
+            {
+                date: "2026-04-14",
+                title: "Staying Right Next to Pisa",
+                category: "Trips ✈️",
+                image_url: "https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?q=80&w=600&auto=format&fit=crop",
+                description: "Waking up right next to the Leaning Tower of Pisa! We spent hours exploring, snapping classic silly tourist photos, and loving every minute of being right in the heart of Tuscany."
+            },
+            {
+                date: "2026-05-03",
+                title: "The Surprise Liverpool Half-Marathon!",
+                category: "Milestones 🏅",
+                image_url: "https://images.unsplash.com/photo-1502224562085-639556652f33?q=80&w=600", 
+                description: "What a crazy, unforgettable milestone! We conquered the Liverpool Half-Marathon together. The best part? Nicko didn't even know he was running it until that very weekend! He was the one surprised, but loved every second of it, and we smashed it side-by-side."
+            },
+            {
+                date: "2026-05-10",
+                title: "Our Endless Parkrun Streak",
+                category: "Adventure ⛰️",
+                image_url: "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?q=80&w=600&auto=format&fit=crop",
+                description: "We have run numerous parkruns together all over. No matter how tired we are on a Saturday morning, stepping up to the starting line side-by-side is our absolute favorite routine."
+            }
+        ];
+
+        window.addEventListener('load', async () => {
+            updateLiveCounter();
+            setInterval(updateLiveCounter, 1000);
+            renderCategories();
+            await fetchMemoriesFromCloud();
+            initQuiz();
+        });
+
+        async function fetchMemoriesFromCloud() {
+            let { data, error } = await _supabase.from('memories').select('*').order('date', { ascending: true });
+            if (error) {
+                showToast("Error loading from cloud base. ❌");
+                console.error(error);
+                return;
+            }
+            memories = data || [];
+            
+            // Show Seeding assistant if DB has zero moments
+            const seedBanner = document.getElementById('seedingBanner');
+            if (memories.length === 0) {
+                seedBanner.classList.remove('hidden');
+            } else {
+                seedBanner.classList.add('hidden');
+            }
+
+            renderMemories();
+        }
+
+        async function seedDefaultMemories() {
+            showToast("Seeding default love story moments... 💕");
+            const { error } = await _supabase.from('memories').insert(defaultMemories);
+            if (!error) {
+                showToast("Love story seeded successfully! 🎉");
+                document.getElementById('seedingBanner').classList.add('hidden');
+                sparkleHeartConfetti();
+                await fetchMemoriesFromCloud();
+            } else {
+                showToast("Seeding failed. Make sure columns match! ❌");
+                console.error(error);
+            }
+        }
+
+        function updateLiveCounter() {
+            const targetDate = new Date(defaultAnniversaryDate + "T00:00:00");
+            const difference = new Date().getTime() - targetDate.getTime();
+            
+            const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+            document.getElementById('counter-days').innerText = String(days).padStart(3, '0');
+            document.getElementById('counter-hours').innerText = String(hours).padStart(2, '0');
+            document.getElementById('counter-minutes').innerText = String(minutes).padStart(2, '0');
+            document.getElementById('counter-seconds').innerText = String(seconds).padStart(2, '0');
+        }
+
+        function renderCategories() {
+            const container = document.getElementById('categoriesContainer');
+            container.innerHTML = '';
+            const standardCategories = ["All", "Dates 🥐", "Trips ✈️", "Adventure ⛰️", "Cozy 🏡", "Milestones 🏅"];
+            standardCategories.forEach(cat => {
+                const isSelected = selectedCategory === cat;
+                const activeClass = isSelected ? 'bg-stone-800 text-white shadow-sm' : 'bg-white text-stone-600 border border-stone-100';
+                const btn = document.createElement('button');
+                btn.className = `px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${activeClass}`;
+                btn.innerText = cat;
+                btn.onclick = () => { selectedCategory = cat; renderCategories(); renderMemories(); };
+                container.appendChild(btn);
+            });
+        }
+
+        function setViewMode(mode) {
+            viewMode = mode;
+            const btnTimeline = document.getElementById('btnViewTimeline');
+            const btnPolaroid = document.getElementById('btnViewPolaroid');
+            if (mode === 'timeline') {
+                btnTimeline.className = "px-3 py-1 rounded-full text-xs font-medium bg-white text-gray-800 shadow-sm";
+                btnPolaroid.className = "px-3 py-1 rounded-full text-xs font-medium text-gray-500";
+                document.getElementById('timelineView').classList.remove('hidden');
+                document.getElementById('polaroidView').classList.add('hidden');
+            } else {
+                btnPolaroid.className = "px-3 py-1 rounded-full text-xs font-medium bg-white text-gray-800 shadow-sm";
+                btnTimeline.className = "px-3 py-1 rounded-full text-xs font-medium text-gray-500";
+                document.getElementById('polaroidView').classList.remove('hidden');
+                document.getElementById('timelineView').classList.add('hidden');
+            }
+            renderMemories();
+        }
+
+        function renderMemories() {
+            const tContainer = document.getElementById('timelineContainer');
+            const pContainer = document.getElementById('polaroidContainer');
+            tContainer.innerHTML = ''; pContainer.innerHTML = '';
+            
+            let filtered = memories.filter(m => selectedCategory === "All" || m.category === selectedCategory);
+
+            filtered.forEach((mem, index) => {
+                const rawDate = new Date(mem.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+                const hasPhoto = mem.image_url && mem.image_url.trim() !== "";
+                const photoSrc = hasPhoto ? mem.image_url : 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=400';
+
+                // Render Timeline Card element
+                const tCard = document.createElement('div');
+                tCard.className = `timeline-item relative flex flex-col md:flex-row items-start md:items-center my-6 group cursor-pointer ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'}`;
+                tCard.onclick = () => openModal(mem);
+                tCard.innerHTML = `
+                    <div class="w-full md:w-1/2 ${index % 2 === 0 ? 'md:text-right md:pr-12' : 'md:text-left md:pl-12'} pl-12 md:pl-0">
+                        <span class="inline-block px-2 py-0.5 text-[9px] font-semibold rounded-full bg-rose-400 text-white mb-1">${mem.category}</span>
+                        <div class="text-[10px] text-stone-400 font-bold mb-0.5">${rawDate}</div>
+                        <h3 class="font-serif text-lg font-bold text-stone-800 group-hover:text-rose-400">${mem.title}</h3>
+                        <p class="text-xs text-stone-500 line-clamp-2 mt-0.5 font-light">${mem.description}</p>
+                    </div>
+                    <div class="absolute left-6 md:left-1/2 transform -translate-x-1/2 w-4 h-4 rounded-full bg-white border-2 border-rose-400 z-20"></div>
+                    <div class="w-full md:w-1/2 ${index % 2 === 0 ? 'md:pl-12' : 'md:pr-12'} pl-12 md:pl-0 mt-2 md:mt-0">
+                        <div class="w-full h-36 rounded-xl overflow-hidden border bg-stone-100">
+                            <img src="${photoSrc}" class="w-full h-full object-cover" onerror="window.handleImageLoadError(this)">
+                        </div>
+                    </div>
+                `;
+                tContainer.appendChild(tCard);
+
+                // Render Polaroid element
+                const pCard = document.createElement('div');
+                pCard.className = "polaroid-card bg-white p-4 pb-6 rounded-sm shadow-sm border border-stone-100 flex flex-col justify-between";
+                pCard.onclick = () => openModal(mem);
+                pCard.innerHTML = `
+                    <div class="aspect-square overflow-hidden border relative">
+                        <img src="${photoSrc}" class="w-full h-full object-cover" onerror="window.handleImageLoadError(this)">
+                    </div>
+                    <div class="mt-4 text-center">
+                        <div class="text-[9px] text-stone-400 tracking-widest font-bold">${rawDate}</div>
+                        <h4 class="font-handwriting text-2xl text-stone-700 truncate">${mem.title}</h4>
+                    </div>
+                `;
+                pContainer.appendChild(pCard);
+            });
+        }
+
+        function openModal(mem) {
+            const modal = document.getElementById('scrapbookModal');
+            document.getElementById('modalImage').src = mem.image_url || '';
+            document.getElementById('modalDate').innerText = new Date(mem.date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('modalTitle').innerText = mem.title;
+            document.getElementById('modalText').innerText = mem.description;
+            document.getElementById('modalTag').innerText = mem.category;
+            
+            // Wire Edit button inside modal dynamically
+            document.getElementById('modalEditBtn').onclick = () => {
+                openEditDrawer(mem);
+            };
+
+            // Delete button mapping directly to Supabase row removal
+            document.getElementById('modalDeleteBtn').onclick = async () => {
+                showToast("Deleting... ⏳");
+                const { error } = await _supabase.from('memories').delete().eq('id', mem.id);
+                if (!error) {
+                    showToast("Memory removed from cloud database! ✨");
+                    closeModal();
+                    await fetchMemoriesFromCloud();
+                }
+            };
+
+            modal.classList.add('opacity-100');
+            modal.classList.remove('pointer-events-none');
+            modal.querySelector('.transform').classList.remove('translate-y-4');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('scrapbookModal');
+            modal.classList.remove('opacity-100');
+            modal.classList.add('pointer-events-none');
+            modal.querySelector('.transform').classList.add('translate-y-4');
+        }
+
+        function openEditDrawer(mem) {
+            closeModal();
+            document.getElementById('editMemoryIndex').value = mem.id;
+            document.getElementById('memTitle').value = mem.title;
+            document.getElementById('memCategory').value = mem.category;
+            document.getElementById('memDate').value = mem.date;
+            document.getElementById('memImageUrl').value = mem.image_url || '';
+            document.getElementById('memDescription').value = mem.description;
+
+            document.getElementById('drawerTitle').innerHTML = `<i class="fa-solid fa-edit text-rose-400"></i> Edit Cloud Moment`;
+            document.getElementById('memSubmitButton').innerText = "Update Cloud Memory";
+
+            if (mem.image_url) {
+                document.getElementById('drawerImagePreview').src = mem.image_url;
+                document.getElementById('drawerImagePreviewContainer').classList.remove('hidden');
+            } else {
+                document.getElementById('drawerImagePreviewContainer').classList.add('hidden');
+            }
+
+            toggleMemoryDrawer(true);
+        }
+
+        function toggleMemoryDrawer(open = true) {
+            const drawer = document.getElementById('memoryDrawer');
+            if (open) { 
+                drawer.classList.remove('translate-x-full'); 
+            } else { 
+                drawer.classList.add('translate-x-full'); 
+                // Restore form to creation status defaults
+                document.getElementById('editMemoryIndex').value = "";
+                document.getElementById('memoryForm').reset();
+                document.getElementById('drawerTitle').innerHTML = `<i class="fa-solid fa-camera text-rose-400"></i> Add Beautiful Memory`;
+                document.getElementById('memSubmitButton').innerText = "Save Memory";
+                document.getElementById('drawerImagePreviewContainer').classList.add('hidden');
+            }
+        }
+
+        async function compressAndProcessImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            showToast("Processing camera file... ⌛");
+
+            let imgFile = file;
+            if (file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) {
+                try {
+                    // Optimized with 0.8 quality threshold for converted Apple structures
+                    const converted = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.8 });
+                    imgFile = Array.isArray(converted) ? converted[0] : converted;
+                } catch (e) { console.error(e); }
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    // Upgraded bounding box threshold to 1080px for crisp Full HD quality on mobile retina displays
+                    const MAX_BOUND = 1080;
+                    let w = img.width, h = img.height;
+                    if (w > h ? w > MAX_BOUND : h > MAX_BOUND) {
+                        if (w > h) { h *= MAX_BOUND / w; w = MAX_BOUND; }
+                        else { w *= MAX_BOUND / h; h = MAX_BOUND; }
+                    }
+                    canvas.width = w; canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    
+                    // Increased export encoding quality to 0.80 to prevent compression artifacts
+                    const compressedData = canvas.toDataURL('image/jpeg', 0.80);
+                    document.getElementById('memImageUrl').value = compressedData;
+                    document.getElementById('drawerImagePreview').src = compressedData;
+                    document.getElementById('drawerImagePreviewContainer').classList.remove('hidden');
+                    showToast("Photo processed natively with high resolution! 📸");
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(imgFile);
+        }
+
+        async function handleMemoryFormSubmit(event) {
+            event.preventDefault();
+            showToast("Saving changes to Supabase... ⚡");
+
+            const editId = document.getElementById('editMemoryIndex').value;
+
+            const payload = {
+                title: document.getElementById('memTitle').value,
+                category: document.getElementById('memCategory').value,
+                date: document.getElementById('memDate').value,
+                image_url: document.getElementById('memImageUrl').value,
+                description: document.getElementById('memDescription').value
+            };
+
+            let response;
+            if (editId) {
+                // Update existing row
+                response = await _supabase.from('memories').update(payload).eq('id', editId);
+            } else {
+                // Insert brand new row
+                response = await _supabase.from('memories').insert([payload]);
+            }
+
+            if (!response.error) {
+                showToast(editId ? "Memory updated successfully! ✨" : "New memory successfully saved online! 📱");
+                toggleMemoryDrawer(false);
+                document.getElementById('memoryForm').reset();
+                document.getElementById('drawerImagePreviewContainer').classList.add('hidden');
+                await fetchMemoriesFromCloud();
+            } else {
+                showToast("Cloud writing failed. Check DB table constraints! ❌");
+                console.error(response.error);
+            }
+        }
+
+        function initQuiz() {
+            quizPool = [
+                { q: "Where was our very first date on April 26th where we ran through the park?", options: ["Richmond Park", "Hampstead Heath", "Clapham Common"], correct: "Clapham Common" },
+                { q: "In what town did we spend a cozy October weekend inside a beautiful shepherds hut?", options: ["Pisa", "Ashbourne", "Lucca"], correct: "Ashbourne" },
+                { q: "In the surprise Liverpool Half-Marathon, who was completely unaware they were running until that very weekend?", options: ["Tess", "Nicko", "Both of us"], correct: "Nicko" }
+            ];
+            quizStep = 0; showQuizQuestion();
+        }
+
+        function showQuizQuestion() {
+            if (quizStep >= quizPool.length) {
+                document.getElementById('quizQuestionBox').classList.add('hidden');
+                document.getElementById('quizSuccessBox').classList.remove('hidden');
+                return;
+            }
+            const activeQ = quizPool[quizStep];
+            document.getElementById('quizQuestionText').innerText = activeQ.q;
+            const oBox = document.getElementById('quizOptions'); oBox.innerHTML = '';
+            activeQ.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left px-4 py-2 text-xs font-semibold rounded-lg bg-stone-50 border border-stone-200 text-stone-700 hover:bg-rose-50";
+                btn.innerText = opt;
+                btn.onclick = () => {
+                    if (opt === activeQ.correct) { quizStep++; showQuizQuestion(); }
+                    else { showToast("Not quite right! Try again. ❤️"); }
+                };
+                oBox.appendChild(btn);
+            });
+        }
+
+        function toggleLoveLetter(open = true) {
+            const modal = document.getElementById('loveLetterModal');
+            if (open) {
+                document.getElementById('letterText').innerText = letterMasterText;
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+            } else {
+                modal.classList.add('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        let canvasHearts = document.getElementById('heartsCanvas'), ctxHearts = canvasHearts.getContext('2d'), pArray = [];
+        function resizeC() { canvasHearts.width = window.innerWidth; canvasHearts.height = window.innerHeight; }
+        window.addEventListener('resize', resizeC); resizeC();
+        
+        function sparkleHeartConfetti() {
+            for (let i = 0; i < 25; i++) {
+                pArray.push({
+                    x: window.innerWidth / 2, y: window.innerHeight / 2,
+                    sz: Math.random() * 8 + 4, dx: (Math.random() - 0.5) * 6, dy: Math.random() * -5 - 2,
+                    op: 1, c: `rgba(212, 163, 150, ${Math.random() * 0.6 + 0.4})`
+                });
+            }
+        }
+        function drawP() {
+            ctxHearts.clearRect(0,0,canvasHearts.width,canvasHearts.height);
+            for(let i=pArray.length-1; i>=0; i--) {
+                let p = pArray[i]; p.x+=p.dx; p.y+=p.dy; p.op-=0.015;
+                if(p.op<=0) { pArray.splice(i,1); continue; }
+                ctxHearts.save(); ctxHearts.globalAlpha=p.op; ctxHearts.fillStyle=p.c;
+                ctxHearts.beginPath(); ctxHearts.moveTo(p.x, p.y);
+                ctxHearts.bezierCurveTo(p.x-p.sz, p.y-p.sz, p.x-p.sz*2, p.y-p.sz/2, p.x-p.sz*2, p.y);
+                ctxHearts.bezierCurveTo(p.x-p.sz*2, p.y+p.sz, p.x-p.sz, p.y+p.sz*2, p.x, p.y+p.sz*3);
+                ctxHearts.bezierCurveTo(p.x+p.sz, p.y+p.sz*2, p.x+p.sz*2, p.y+p.sz, p.x+p.sz*2, p.y);
+                ctxHearts.bezierCurveTo(p.x+p.sz*2, p.y-p.sz/2, p.x+p.sz, p.y-p.sz, p.x, p.y);
+                ctxHearts.fill(); ctxHearts.restore();
+            }
+            requestAnimationFrame(drawP);
+        }
+        drawP();
+
+        let tOut = null;
+        function showToast(m) {
+            const t = document.getElementById('toast'); document.getElementById('toastMessage').innerText = m;
+            t.classList.remove('opacity-0', 'pointer-events-none'); t.classList.add('opacity-100');
+            if (tOut) clearTimeout(tOut); tOut = setTimeout(() => { t.classList.add('opacity-0', 'pointer-events-none'); }, 3000);
+        }
+    </script>
+</body>
+</html>
